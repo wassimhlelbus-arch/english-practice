@@ -101,9 +101,9 @@
   let px = 0, py = 0;               // parallax (smooth)
 
   function follow() {
-    gx += (mouse.x - gx) * 0.12;
-    gy += (mouse.y - gy) * 0.12;
-    glow.style.transform = `translate3d(${gx - 350}px, ${gy - 350}px, 0)`;
+    gx += (mouse.x - gx) * 0.04;
+    gy += (mouse.y - gy) * 0.04;
+    glow.style.transform = `translate3d(${gx - 450}px, ${gy - 450}px, 0)`;
     glow.classList.toggle("on", mouse.active);
 
     const tx = (mouse.x / innerWidth - 0.5) * 2;
@@ -132,53 +132,72 @@
     canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const count = Math.round(Math.min(120, (W * H) / 14000));
+    const count = Math.round(Math.min(200, (W * H) / 8000));
     dust = Array.from({ length: count }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.09,
-      vy: (Math.random() - 0.5) * 0.09 - 0.03,   // slowly rising
-      r: Math.random() * 1.3 + 0.3,
-      a: Math.random() * 0.35 + 0.08,
+      x:  Math.random() * W,
+      y:  Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.1,
+      vy: (Math.random() - 0.5) * 0.1 - 0.01,
+      r:  Math.random() * 1.6 + 0.5,
+      a:  Math.random() * 0.5 + 0.18,
     }));
   }
-
-  const RADIUS = 170; // how far the mouse reaches
 
   function tick() {
     ctx.clearRect(0, 0, W, H);
 
     for (const p of dust) {
+      if (mouse.active) {
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const d  = Math.hypot(dx, dy);
+
+        if (d > 1) {
+          // ultra-gentle pull — particle barely notices the mouse at first,
+          // then very slowly drifts toward it over several seconds
+          const pull = Math.min(0.007, 18 / (d * d + 1));
+          p.vx += (dx / d) * pull;
+          p.vy += (dy / d) * pull;
+
+          // tiny orbit nudge so they swirl instead of collapsing
+          if (d < 90) {
+            const push = (90 - d) / 90 * 0.045;
+            p.vx -= (dx / d) * push;
+            p.vy -= (dy / d) * push;
+          }
+        }
+      }
+
+      // very high damping = buttery slow, no jerk ever
+      p.vx *= 0.982;
+      p.vy *= 0.982;
+
+      // hard cap: nothing moves faster than 0.5 px per frame (~30 px / s)
+      const spd = Math.hypot(p.vx, p.vy);
+      if (spd > 0.5) { p.vx = p.vx / spd * 0.5; p.vy = p.vy / spd * 0.5; }
+
       p.x += p.vx;
       p.y += p.vy;
+
       if (p.x < -5) p.x = W + 5;
       if (p.x > W + 5) p.x = -5;
       if (p.y < -5) p.y = H + 5;
       if (p.y > H + 5) p.y = -5;
 
-      let near = 0;
-      if (mouse.active) {
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const d = Math.hypot(dx, dy);
-        if (d < RADIUS && d > 0.1) {
-          near = 1 - d / RADIUS;
-          // drift away gently
-          p.x += (dx / d) * near * 0.35;
-          p.y += (dy / d) * near * 0.35;
-        }
-      }
+      // --- glow ---
+      const dist = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+      const near = mouse.active ? Math.max(0, 1 - dist / 260) : 0;
 
-      const alpha = Math.min(1, p.a + near * 0.45);
+      const alpha = Math.min(1, p.a + near * 0.78);
       ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      if (near > 0.3) {
-        ctx.shadowColor = "rgba(255,255,255,0.9)";
-        ctx.shadowBlur = 10 * near;
+      if (near > 0.08) {
+        ctx.shadowColor = "rgba(255,255,255,1)";
+        ctx.shadowBlur  = 22 * near;
       } else {
         ctx.shadowBlur = 0;
       }
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r + near * 1.2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.r + near * 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.shadowBlur = 0;

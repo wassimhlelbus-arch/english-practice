@@ -66,6 +66,25 @@
           Screenshot
         </button>
         <button class="sound" id="soundBtn" title="الصوت: تشغيل / إيقاف"></button>
+        <div class="lang-wrap">
+          <button class="sound" id="langBtn" title="Language &amp; situation">🌐 <span id="langLabel">AR→EN</span></button>
+          <div class="popover lang-pop" id="langPop" hidden>
+            <p class="lang-pop-title">Your language settings</p>
+            <div class="lang-row">
+              <label class="label" for="nativeSel">I speak (shown on top)</label>
+              <select class="field lang-sel" id="nativeSel"></select>
+            </div>
+            <div class="lang-row">
+              <label class="label" for="targetSel">I'm learning (I type this)</label>
+              <select class="field lang-sel" id="targetSel"></select>
+            </div>
+            <div class="lang-row">
+              <label class="label" for="sitSel">Situation</label>
+              <select class="field lang-sel" id="sitSel"></select>
+            </div>
+            <button class="btn primary" id="langSave">Apply</button>
+          </div>
+        </div>
         <div class="segmented" id="modes">
           <button data-mode="copy" title="انسخ">Copy</button>
           <button data-mode="challenge" title="ترجم">Translate</button>
@@ -300,7 +319,30 @@
     </div>
   </div>
 
+  <!-- ===== First-time welcome overlay ===== -->
+  <div class="welcome-overlay" id="welcomeOverlay" hidden>
+    <div class="welcome-box">
+      <p class="label" style="text-align:center;margin-bottom:6px">English Practice</p>
+      <h2 class="welcome-title">Choose your language</h2>
+      <p class="welcome-sub">You can change this any time with the 🌐 button.</p>
+      <div class="lang-row">
+        <label class="label" for="wNativeSel">I speak (shown on top)</label>
+        <select class="field lang-sel" id="wNativeSel"></select>
+      </div>
+      <div class="lang-row">
+        <label class="label" for="wTargetSel">I'm learning (I type this)</label>
+        <select class="field lang-sel" id="wTargetSel"></select>
+      </div>
+      <div class="lang-row">
+        <label class="label" for="wSitSel">Situation</label>
+        <select class="field lang-sel" id="wSitSel"></select>
+      </div>
+      <button class="btn primary" id="welcomeStart" style="width:100%;margin-top:10px">Start →</button>
+    </div>
+  </div>
+
   <script src="extras.js"></script>
+  <script src="situations.js"></script>
   <script src="script.js"></script>
   <script src="effects.js"></script>
 </body>

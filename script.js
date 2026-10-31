@@ -249,6 +249,108 @@ if (typeof ITEM_EXTRAS !== "undefined") {
   }));
 }
 
+// =====================================================
+//  LANGUAGE + SITUATION
+// =====================================================
+const LANGS = typeof LANGUAGES !== "undefined" ? LANGUAGES : [];
+const langMeta = (code) => LANGS.find((l) => l.code === code)
+  || { code, en: code, name: code, bcp: code + "-" + code.toUpperCase(), mm: code };
+
+let nativeLang = load("be-native", "ar");    // shown on top (help)
+let targetLang = load("be-target", "en");    // the language you type and practice
+let situation  = load("be-sit", "business"); // which lesson set
+
+// Translation cache (in-memory, rebuilt each page load from API)
+const _trCache = {};
+
+async function translateText(text, toLang) {
+  if (!text || toLang === "en") return text;
+  const key = toLang + ":" + text.slice(0, 80);
+  if (_trCache[key]) return _trCache[key];
+  const mm = langMeta(toLang).mm || toLang;
+  try {
+    if ("Translator" in self) {
+      const avail = await Translator.availability({ sourceLanguage: "en", targetLanguage: toLang });
+      if (avail === "available") {
+        const t = await Translator.create({ sourceLanguage: "en", targetLanguage: toLang });
+        const r = await t.translate(text);
+        if (r) { _trCache[key] = r; return r; }
+      }
+    }
+  } catch { /* fall through */ }
+  const chunks = [];
+  (text.match(/[^.!?]+[.!?]*\s*/g) || [text]).forEach((s) => {
+    if (chunks.length && (chunks[chunks.length - 1] + s).length < 440) chunks[chunks.length - 1] += s;
+    else chunks.push(s);
+  });
+  const parts = [];
+  for (const chunk of chunks) {
+    const url = `https://api.mymemory.translated.net/get?langpair=en|${mm}&q=` + encodeURIComponent(chunk.trim());
+    const data = await (await fetch(url)).json();
+    const tr = data?.responseData?.translatedText;
+    if (!tr || /MYMEMORY WARNING/i.test(tr)) throw new Error("translate");
+    parts.push(tr);
+  }
+  const result = parts.join(" ");
+  _trCache[key] = result;
+  return result;
+}
+
+// Text to show on top (native/help language)
+function nativeText(it) {
+  if (!it) return "";
+  if (nativeLang === "ar") return it.ar || "";
+  if (nativeLang === "en") return it.en || "";
+  const key = nativeLang + ":" + (it.en || "").slice(0, 80);
+  return _trCache[key] || it.ar || "";  // fallback to Arabic while translating
+}
+
+// Text to type and practice (target language)
+function targetText(it) {
+  if (!it) return "";
+  if (targetLang === "en") return it.en || "";
+  if (targetLang === "ar") return it.ar || it.en || "";
+  const key = targetLang + ":" + (it.en || "").slice(0, 80);
+  return _trCache[key] || it.en || "";  // fallback to English while translating
+}
+
+// BCP-47 tag for the practice language (speech recognition + synthesis)
+function targetBcp() { return langMeta(targetLang).bcp || "en-US"; }
+// Is the target language written right-to-left?
+function targetRtl() { return !!(langMeta(targetLang).rtl); }
+
+// Active topics (changes when situation changes)
+let ACTIVE_TOPICS = [];
+
+function updateActiveSituation() {
+  if (situation === "business") {
+    ACTIVE_TOPICS = TOPICS;
+  } else if (typeof MORE_SITUATIONS !== "undefined") {
+    const sit = MORE_SITUATIONS.find((s) => s.id === situation);
+    ACTIVE_TOPICS = sit ? sit.topics : TOPICS;
+  } else {
+    ACTIVE_TOPICS = TOPICS;
+  }
+}
+updateActiveSituation();
+
+// Fetch translations for one item (called when language changes or a new item loads)
+async function prefetchItem(it) {
+  if (!it || !it.en) return;
+  let changed = false;
+  try {
+    if (nativeLang !== "en" && nativeLang !== "ar") {
+      await translateText(it.en, nativeLang);
+      changed = true;
+    }
+    if (targetLang !== "en" && targetLang !== "ar") {
+      await translateText(it.en, targetLang);
+      changed = true;
+    }
+  } catch { /* internet may not be available */ }
+  if (changed) showItem();
+}
+
 const TYPE_LABEL = { word: "Word", sentence: "Sentence", paragraph: "Paragraph" };
 
 const MODE_HELP = {
@@ -342,7 +444,7 @@ function save(key, value) {
 // Every exercise from every topic, in a random order
 function shuffledRefs() {
   const refs = [];
-  TOPICS.forEach((t, ti) => t.items.forEach((_, ii) => refs.push({ t: ti, i: ii })));
+  ACTIVE_TOPICS.forEach((t, ti) => t.items.forEach((_, ii) => refs.push({ t: ti, i: ii })));
   for (let k = refs.length - 1; k > 0; k--) {
     const j = Math.floor(Math.random() * (k + 1));
     [refs[k], refs[j]] = [refs[j], refs[k]];
@@ -365,7 +467,7 @@ function typeOf(text) {
 // ----- Items: every list (topic, Mix, My texts, Review, Replay) is a list of refs -----
 // ref = { key, item, src, cid? }
 function topicRef(t, i) {
-  const tp = TOPICS[t];
+  const tp = ACTIVE_TOPICS[t];
   return { key: "lf-" + tp.id + "-" + i, item: tp.items[i], src: tp.en };
 }
 
@@ -380,8 +482,8 @@ function refFromKey(key) {
   }
   const m = /^lf-(.+)-(\d+)$/.exec(key);
   if (!m) return null;
-  const t = TOPICS.findIndex((x) => x.id === m[1]);
-  if (t < 0 || !TOPICS[t].items[Number(m[2])]) return null;
+  const t = ACTIVE_TOPICS.findIndex((x) => x.id === m[1]);
+  if (t < 0 || !ACTIVE_TOPICS[t].items[Number(m[2])]) return null;
   return topicRef(t, Number(m[2]));
 }
 
@@ -390,7 +492,7 @@ function list() {
   if (isMine()) return custom.map(mineRef);
   if (isReview()) return reviewOrder.map(refFromKey).filter(Boolean);
   if (isReplay()) return replayList.map(refFromKey).filter(Boolean);
-  return TOPICS[view].items.map((_, i) => topicRef(view, i));
+  return ACTIVE_TOPICS[view].items.map((_, i) => topicRef(view, i));
 }
 
 const ref = () => list()[itemIndex];
@@ -403,7 +505,7 @@ function viewInfo() {
   if (isMine()) return { en: "My texts", ar: "نصوصي" };
   if (isReview()) return { en: "Review", ar: "راجع ما أخطأت فيه، الأكثر خطأ أولا" };
   if (isReplay()) return { en: "Replay misses", ar: "أعد التمارين التي أخطأت فيها" };
-  return TOPICS[view];
+  return ACTIVE_TOPICS[view];
 }
 
 // Clean pasted text: one line, simple quotes and dashes you can type
@@ -418,11 +520,17 @@ function cleanText(s) {
 }
 
 // Make text simple for comparing: small letters, no punctuation
+// For Arabic / RTL languages, keep the Unicode letters instead of stripping them
 function normalize(text) {
+  if (targetLang === "ar") {
+    return text.replace(/[ؐ-ًؚ-ٟ]/g, "")  // strip Arabic diacritics
+      .replace(/[^؀-ۿݐ-ݿࢠ-ࣿ0-9 ]/g, " ")
+      .replace(/\s+/g, " ").trim();
+  }
   return text
     .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[^a-z0-9' ]/g, " ")
+    .replace(/[‘’]/g, "’")
+    .replace(/[^a-z0-9’À-ɏ ]/g, " ")   // keep Latin extended (é, ü, ñ, etc.)
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -453,7 +561,7 @@ function setFeedback(en, ar, bad) {
 function speak(text, rate = 0.9) {
   if (!("speechSynthesis" in window)) return;
   const voice = new SpeechSynthesisUtterance(text);
-  voice.lang = "en-US";
+  voice.lang = targetBcp();
   voice.rate = rate;
   speechSynthesis.cancel();
   speechSynthesis.speak(voice);
@@ -466,7 +574,7 @@ function autoSpeak(text) {
 
 // What the audio buttons read: in Gap mode, the sentence shown on screen
 function audioText() {
-  return mode === "gap" && gap ? gap.text : item().en;
+  return mode === "gap" && gap ? gap.text : targetText(item());
 }
 
 // Restart an animation
@@ -797,7 +905,7 @@ function drawTopics() {
   nav.innerHTML = "";
   const tabs = [
     { v: "mix", label: "Mix · random", ar: "كل المواضيع بترتيب عشوائي", pill: true },
-    ...TOPICS.map((t, i) => ({ v: i, label: t.en, ar: t.ar })),
+    ...ACTIVE_TOPICS.map((t, i) => ({ v: i, label: t.en, ar: t.ar })),
     { v: "mine", label: `My texts · ${custom.length}`, ar: "نصوصي", pill: true },
     { v: "review", label: `Review · ${weakCount()}`, ar: "مراجعة الأخطاء", pill: true },
   ];
@@ -833,7 +941,7 @@ function drawSegments() {
 }
 
 function drawProgress() {
-  const total = TOPICS.reduce((s, t) => s + t.items.length, 0);
+  const total = ACTIVE_TOPICS.reduce((s, t) => s + t.items.length, 0);
   const finished = [...done].filter((k) => k.startsWith("lf-")).length;
   $("statDone").textContent = `${finished} / ${total}`;
 }
@@ -949,7 +1057,7 @@ function drawLibrary() {
 
 // COPY: every letter turns white (right) or red (wrong), in place
 function drawCopy() {
-  const target = item().en;
+  const target = targetText(item());
   const typed = typingEl.value;
   englishEl.innerHTML = "";
   for (let i = 0; i < target.length; i++) {
@@ -966,9 +1074,10 @@ function drawHidden() {
   const it = item();
   englishEl.innerHTML = "";
 
+  const tgt = targetText(it);
   if (it.type === "word") {
     // hint shows letters one by one
-    [...it.en].forEach((c, i) => {
+    [...tgt].forEach((c, i) => {
       const span = document.createElement("span");
       span.textContent = i < hint ? c : c === " " ? " " : "_";
       if (i < hint) span.className = "ok";
@@ -979,9 +1088,9 @@ function drawHidden() {
   }
 
   // hint shows words one by one
-  it.en.split(" ").forEach((w, i) => {
+  tgt.split(" ").forEach((w, i) => {
     const span = document.createElement("span");
-    span.textContent = i < hint ? w : "_".repeat(w.replace(/[^a-zA-Z']/g, "").length || 1);
+    span.textContent = i < hint ? w : "_".repeat(w.replace(/[^\p{L}\p{N}']/gu, "").length || 1);
     if (i < hint) span.className = "ok";
     englishEl.appendChild(span);
     englishEl.appendChild(document.createTextNode(" "));
@@ -1016,7 +1125,7 @@ function findWord(text, word) {
 
 // Choose the hidden word: the item's key word(s), or a long word as a fallback
 function pickGap(it) {
-  let text = it.en;
+  let text = targetText(it) || it.en;
   let ar = it.ar;
   let candidates;
   let type = it.type;
@@ -1072,7 +1181,7 @@ function cleanGap(s) {
 
 // ----- SPEAK mode: show the sentence to read -----
 function drawReading() {
-  englishEl.textContent = item().en;
+  englishEl.textContent = targetText(item());
   englishEl.classList.add("reading");
 }
 
@@ -1141,19 +1250,21 @@ function showItem() {
   $("counter").textContent = pad2(itemIndex + 1) + " / " + pad2(total);
 
   // Gap mode shows a sentence with one word missing
-  let ar = it.ar;
   let shownType = it.type;
   gap = null;
   if (mode === "gap") {
     gap = pickGap(it);
-    ar = gap.ar;
     shownType = gap.type;
   }
 
-  arabicEl.textContent = ar || "";
-  arabicEl.hidden = !ar;
+  const natText = mode === "gap" && gap ? (nativeLang === "ar" ? gap.ar : nativeText({ en: gap.text, ar: gap.ar })) : nativeText(it);
+  const isRtlNative = !!(langMeta(nativeLang).rtl);
+  arabicEl.textContent = natText || "";
+  arabicEl.hidden = !natText;
+  arabicEl.dir = isRtlNative ? "rtl" : "ltr";
   arabicEl.className = "arabic " + shownType;
   englishEl.className = "english " + shownType;
+  englishEl.dir = targetRtl() ? "rtl" : "ltr";
   replay(arabicEl, "fade");
   replay(englishEl, "fade");
 
@@ -1179,11 +1290,14 @@ function showItem() {
   if (mode === "speak") $("micBtn").focus({ preventScroll: true });
   else typingEl.focus({ preventScroll: true });
 
-  if (mode === "listen") autoSpeak(it.en);
+  if (mode === "listen") autoSpeak(targetText(it));
 
   // Your own card without Arabic: translate it now
   const own = customOf(r);
   if (own && !own.ar) ensureArabic(own);
+
+  // Fetch translation for this item if native/target language needs it
+  prefetchItem(it);
 }
 
 // The item is finished
@@ -1364,7 +1478,7 @@ function startSpeak() {
   speechError = "";
   let finalText = "";
   const rec = new SpeechRec();
-  rec.lang = "en-US";
+  rec.lang = targetBcp();
   rec.interimResults = true;
   rec.continuous = it.type === "paragraph";
   rec.maxAlternatives = 1;
@@ -1420,7 +1534,7 @@ function evaluateSpeech(text) {
     return;
   }
   const it = item();
-  const result = compareWords(it.en, numbersToWords(text));
+  const result = compareWords(targetText(it), targetLang === "en" ? numbersToWords(text) : text);
   const percent = Math.round(result.score * 100);
   englishEl.classList.remove("reading");
   drawWordResult(result);
@@ -1467,7 +1581,7 @@ function goNext() {
   } else if (itemIndex < count - 1) {
     itemIndex++;
   } else {
-    view = (view + 1) % TOPICS.length;
+    view = (view + 1) % ACTIVE_TOPICS.length;
     itemIndex = 0;
   }
   showItem();
@@ -1480,8 +1594,8 @@ function goBack() {
   } else if (itemIndex > 0) {
     itemIndex--;
   } else {
-    view = (view - 1 + TOPICS.length) % TOPICS.length;
-    itemIndex = TOPICS[view].items.length - 1;
+    view = (view - 1 + ACTIVE_TOPICS.length) % ACTIVE_TOPICS.length;
+    itemIndex = ACTIVE_TOPICS[view].items.length - 1;
   }
   showItem();
 }
@@ -2024,6 +2138,7 @@ $("celebrate").onclick = () => { $("celebrate").hidden = true; };
 document.addEventListener("click", (e) => {
   if (!$("goalPop").hidden && !e.target.closest(".goal-wrap")) openGoal(false);
   if (!$("kbdPop").hidden && !e.target.closest(".kbd-hint")) openKbd(false);
+  if (!$("langPop").hidden && !e.target.closest(".lang-wrap")) $("langPop").hidden = true;
 });
 
 document.querySelectorAll("#modes button").forEach((b) => {
@@ -2036,8 +2151,97 @@ if (!SpeechRec) {
   $("speakNotice").hidden = false;
 }
 
+// =====================================================
+//  LANGUAGE + SITUATION PICKER UI
+// =====================================================
+
+const SIT_OPTIONS = [
+  { id: "business",  label: "Business (Liftora)" },
+  ...(typeof MORE_SITUATIONS !== "undefined" ? MORE_SITUATIONS.map((s) => ({ id: s.id, label: s.en })) : []),
+];
+
+function buildLangSelect(el, selected) {
+  el.innerHTML = "";
+  LANGS.forEach((l) => {
+    const opt = document.createElement("option");
+    opt.value = l.code;
+    opt.textContent = l.name + "  (" + l.en + ")";
+    if (l.code === selected) opt.selected = true;
+    el.appendChild(opt);
+  });
+}
+
+function buildSitSelect(el, selected) {
+  el.innerHTML = "";
+  SIT_OPTIONS.forEach((s) => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.label;
+    if (s.id === selected) opt.selected = true;
+    el.appendChild(opt);
+  });
+}
+
+function updateLangLabel() {
+  const nCode = nativeLang.toUpperCase();
+  const tCode = targetLang.toUpperCase();
+  $("langLabel").textContent = nCode + "→" + tCode;
+}
+
+function applyLangSituation(newNative, newTarget, newSit) {
+  nativeLang = newNative;
+  targetLang = newTarget;
+  situation  = newSit;
+  save("be-native", nativeLang);
+  save("be-target", targetLang);
+  save("be-sit",    situation);
+  updateActiveSituation();
+  mixOrder = shuffledRefs();
+  view = "mix";
+  itemIndex = 0;
+  updateLangLabel();
+  showItem();
+}
+
+// Populate the popover selects
+buildLangSelect($("nativeSel"), nativeLang);
+buildLangSelect($("targetSel"), targetLang);
+buildSitSelect ($("sitSel"),    situation);
+
+// Open/close
+$("langBtn").onclick = (e) => {
+  e.stopPropagation();
+  const pop = $("langPop");
+  pop.hidden = !pop.hidden;
+  if (!pop.hidden) {
+    buildLangSelect($("nativeSel"), nativeLang);
+    buildLangSelect($("targetSel"), targetLang);
+    buildSitSelect ($("sitSel"),    situation);
+  }
+};
+
+$("langSave").onclick = () => {
+  $("langPop").hidden = true;
+  applyLangSituation($("nativeSel").value, $("targetSel").value, $("sitSel").value);
+};
+
+// Welcome overlay: shown once on first visit (no saved native preference)
+const isFirstVisit = !localStorage.getItem("be-native");
+if (isFirstVisit && LANGS.length) {
+  const ov = $("welcomeOverlay");
+  ov.hidden = false;
+  buildLangSelect($("wNativeSel"), "ar");
+  buildLangSelect($("wTargetSel"), "en");
+  buildSitSelect ($("wSitSel"),    "business");
+  $("welcomeStart").onclick = () => {
+    ov.hidden = true;
+    applyLangSituation($("wNativeSel").value, $("wTargetSel").value, $("wSitSel").value);
+  };
+}
+
 // Start
 pruneWeak();
 drawSound();
 drawDaily();
+updateLangLabel();
 setMode("copy");

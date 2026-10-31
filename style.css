@@ -793,17 +793,18 @@ body {
   position: fixed;
   left: 0;
   top: 0;
-  width: 700px;
-  height: 700px;
+  width: 900px;
+  height: 900px;
   border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(255, 255, 255, 0.13) 0%,
-    rgba(200, 212, 235, 0.06) 28%,
-    transparent 62%);
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(220, 228, 248, 0.13) 22%,
+    rgba(200, 215, 240, 0.06) 45%,
+    transparent 68%);
   pointer-events: none;
   z-index: 0;
   opacity: 0;
-  transition: opacity 0.6s;
+  transition: opacity 0.9s;
   will-change: transform;
 }
 
@@ -1730,6 +1731,108 @@ body {
 /* No keyboard on touch screens: hide the shortcuts hint */
 @media (hover: none) and (pointer: coarse) {
   .kbd-hint { display: none; }
+}
+
+/* =====================================================
+   LANGUAGE + SITUATION PICKER
+   ===================================================== */
+.lang-wrap {
+  position: relative;
+}
+
+/* reuse the .sound button style but add a tiny globe label */
+#langBtn {
+  font-size: 12px;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.lang-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  background: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 16px 18px 14px;
+  width: 270px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+
+.lang-pop-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.lang-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.lang-row .label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lang-sel {
+  width: 100%;
+  background: #141414;
+  color: var(--text);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lang-sel:focus {
+  outline: none;
+  border-color: #666;
+}
+
+/* =====================================================
+   FIRST-TIME WELCOME OVERLAY
+   ===================================================== */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.welcome-box {
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 28px 26px 24px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 0 80px rgba(255,255,255,0.04), 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.welcome-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 4px 0 6px;
+  color: var(--text);
+}
+
+.welcome-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
 }
 
 /* People who turned off animations in their system settings */
