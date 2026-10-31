@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business English</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Moving glow in the background ===== -->
+  <div class="ambient" aria-hidden="true">
+    <div class="orb-wrap" data-depth="40"><div class="orb orb1"></div></div>
+    <div class="orb-wrap" data-depth="-30"><div class="orb orb2"></div></div>
+    <div class="orb-wrap" data-depth="60"><div class="orb orb3"></div></div>
+    <canvas id="dust"></canvas>
+  </div>
+
+  <!-- ===== Light that follows the mouse ===== -->
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
+  <div class="stage">
+  <!-- deep glow behind the big panel -->
+  <div class="stage-aura" aria-hidden="true"></div>
+  <!-- soft bloom that follows the moving light on the border -->
+  <div class="stage-bloom" aria-hidden="true"><span></span></div>
+
+  <main class="panel spot">
+    <!-- bright light moving around the border + light that follows the mouse -->
+    <span class="panel-beam" aria-hidden="true"></span>
+    <span class="panel-edge" aria-hidden="true"></span>
+
+    <!-- ===== TOP: name, daily goal, sound, mode ===== -->
+    <div class="panel-top">
+      <div class="top-left">
+        <span class="label">Business English</span>
+        <div class="daily">
+          <span class="pill dark mini" id="todayPill" title="Items done today · تمارين اليوم">
+            <span class="label">Today</span><b id="todayCount">0 / 15</b>
+          </span>
+          <span class="pill dark mini" title="Days in a row with the goal reached · أيام متتالية">
+            <span class="label">Streak</span><b id="streakCount">0 days</b>
+          </span>
+          <div class="goal-wrap">
+            <button class="icon-btn" id="goalBtn" aria-expanded="false" aria-controls="goalPop" title="Daily goal · الهدف اليومي">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4L10.6 6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.3 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>
+            </button>
+            <div class="popover" id="goalPop" hidden>
+              <label class="label" for="goalInput">Daily goal</label>
+              <div class="goal-row">
+                <input class="field goal-input" id="goalInput" type="number" min="1" max="200" inputmode="numeric">
+                <span class="goal-unit">items / day</span>
+              </div>
+              <p class="goal-ar ar" dir="rtl">عدد التمارين التي تريد إنهاءها كل يوم</p>
+              <button class="btn primary" id="goalSave">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="top-right">
+        <button class="sound shot-open" id="shotOpenBtn" title="من صورة: ضع لقطة شاشة وسيظهر النص للتدريب">
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9 4 7.2 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3.2L15 4H9zm3 4.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+          Screenshot
+        </button>
+        <button class="sound" id="soundBtn" title="الصوت: تشغيل / إيقاف"></button>
+        <div class="segmented" id="modes">
+          <button data-mode="copy" title="انسخ">Copy</button>
+          <button data-mode="challenge" title="ترجم">Translate</button>
+          <button data-mode="listen" title="استمع واكتب">Listen</button>
+          <button data-mode="gap" title="أكمل الكلمة الناقصة">Gap</button>
+          <button data-mode="speak" title="تكلّم">Speak</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TITLE ===== -->
+    <h1 class="title" id="title"></h1>
+    <p class="subtitle" id="modeHelp"></p>
+    <p class="notice" id="speakNotice" hidden>Speak mode is hidden: this browser has no speech recognition. Use Chrome or Edge to practice speaking.</p>
+
+    <!-- ===== TOPICS ===== -->
+    <nav class="topics" id="topics"></nav>
+
+    <!-- ===== PRACTICE ===== -->
+    <div id="practice">
+      <section class="card spot" id="card">
+        <span class="aura" aria-hidden="true"></span>
+        <span class="edge" aria-hidden="true"></span>
+        <div class="card-head">
+          <div class="head-left">
+            <span class="pill light" id="typePill"></span>
+            <span class="pill weak" id="weakBadge" hidden title="You missed this item before · أخطأت في هذا من قبل">Weak</span>
+          </div>
+          <span class="label" id="counter"></span>
+        </div>
+
+        <p class="arabic" id="arabic" dir="rtl"></p>
+        <p class="english" id="english"></p>
+
+        <div class="example" id="example" hidden>
+          <p class="example-en" id="exampleEn"></p>
+          <p class="example-ar" id="exampleAr" dir="rtl"></p>
+        </div>
+
+        <div class="usage" id="usage" hidden>
+          <div class="usage-block" id="usageBlock">
+            <span class="label">When to use</span>
+            <p class="usage-en" id="usageEn"></p>
+            <p class="usage-ar" id="usageAr" dir="rtl"></p>
+          </div>
+          <div class="usage-block" id="ex2Block">
+            <span class="label">Another example</span>
+            <p class="usage-en" id="ex2En"></p>
+            <p class="usage-ar" id="ex2Ar" dir="rtl"></p>
+          </div>
+        </div>
+
+        <textarea class="field" id="typing" rows="1" autocomplete="off" spellcheck="false"
+                  placeholder="Type in English…"></textarea>
+
+        <div class="speak-box" id="speakBox" hidden>
+          <button class="mic" id="micBtn" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11z"/></svg>
+            <span id="micLabel">Speak</span>
+          </button>
+          <p class="heard" id="heard" aria-live="polite"></p>
+        </div>
+
+        <div class="segments" id="segments"></div>
+      </section>
+
+      <p class="feedback" id="feedback" aria-live="polite"></p>
+
+      <div class="controls">
+        <button class="btn" id="prevBtn" title="السابق · Alt+←">← Back</button>
+        <button class="btn" id="listenBtn" title="استمع · Ctrl+Enter">Listen</button>
+        <button class="btn" id="slowBtn" title="ببطء">Slow</button>
+        <button class="btn" id="hintBtn" title="تلميح">Hint</button>
+        <button class="btn" id="checkBtn" title="تحقق · Enter">Check</button>
+        <button class="btn" id="againBtn" title="أعد من جديد · Esc">↻ Again</button>
+        <button class="btn" id="randomBtn" title="عشوائي">Random</button>
+        <button class="btn primary" id="nextBtn" title="التالي · Enter">Next →</button>
+      </div>
+
+      <div class="kbd-hint">
+        <button class="kbd-btn" id="kbdBtn" aria-expanded="false" aria-controls="kbdPop" title="Keyboard shortcuts · اختصارات لوحة المفاتيح">?</button>
+        <div class="kbd-pop" id="kbdPop" hidden>
+          <p><kbd>Enter</kbd><span>Check, then next</span></p>
+          <p><kbd>Ctrl</kbd> + <kbd>Enter</kbd><span>Play the audio again</span></p>
+          <p><kbd>Esc</kbd><span>Repeat this item</span></p>
+          <p><kbd>Alt</kbd> + <kbd>←</kbd><span>Go back</span></p>
+        </div>
+      </div>
+
+      <div class="keywords" id="keywords" hidden>
+        <span class="label">Key words</span>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+
+    <!-- ===== SESSION SUMMARY (every 10 items) ===== -->
+    <section class="card summary spot" id="summary" hidden>
+      <span class="edge" aria-hidden="true"></span>
+      <div class="card-head">
+        <span class="pill light">Session summary</span>
+        <span class="label" id="sumCount"></span>
+      </div>
+      <div class="sum-stats">
+        <div><span class="label">Accuracy</span><b id="sumAcc">—</b></div>
+        <div><span class="label">Avg speed</span><b id="sumWpm">—</b></div>
+        <div><span class="label">Time</span><b id="sumTime">—</b></div>
+      </div>
+      <p class="label sum-title">Missed · <span id="sumMissN">0</span></p>
+      <ul class="sum-misses" id="sumMisses"></ul>
+      <div class="controls">
+        <button class="btn" id="replayBtn">Replay misses</button>
+        <button class="btn primary" id="continueBtn">Continue</button>
+      </div>
+    </section>
+
+    <!-- ===== REVIEW: nothing to review ===== -->
+    <section class="card empty spot" id="emptyReview" hidden>
+      <span class="edge" aria-hidden="true"></span>
+      <p class="empty-title">Nothing to review.</p>
+      <p class="composer-help">Items you get wrong appear here. Each one leaves after 3 correct answers in a row.
+        <span class="ar">التمارين التي تخطئ فيها تظهر هنا، وتخرج بعد 3 إجابات صحيحة متتالية.</span></p>
+      <div class="controls">
+        <button class="btn primary" id="emptyToMix" title="ارجع إلى التدريب">Practice Mix →</button>
+      </div>
+    </section>
+
+    <!-- ===== MY TEXTS: list ===== -->
+    <section class="library" id="library" hidden>
+      <span class="label">Your texts · نصوصك</span>
+      <div class="lib-list" id="libList"></div>
+      <p class="lib-msg" id="libMsg" aria-live="polite"></p>
+    </section>
+
+    <!-- ===== MY TEXTS: add a new one ===== -->
+    <section class="card composer spot" id="composer" hidden>
+      <span class="edge" aria-hidden="true"></span>
+      <div class="card-head">
+        <span class="pill light">New text</span>
+        <span class="label">أضف نصا للتدريب</span>
+      </div>
+      <p class="composer-help">
+        Paste a paragraph, a sentence or a word you want to learn. Practice it again and again.
+        <span class="ar">الصق فقرة أو جملة أو كلمة تريد تعلّمها، وتدرّب عليها مرة بعد مرة.</span>
+      </p>
+      <textarea class="field tall" id="newEn" rows="4" spellcheck="false"
+                placeholder="English text (required)…"></textarea>
+      <textarea class="field tall ar-field" id="newAr" rows="3" dir="rtl"
+                placeholder="الترجمة بالعربية (اختياري)"></textarea>
+      <p class="feedback bad" id="composerMsg"></p>
+      <div class="controls">
+        <button class="btn" id="cancelText">Cancel</button>
+        <button class="btn primary" id="saveText">Save &amp; practice</button>
+      </div>
+    </section>
+
+    <!-- ===== MY TEXTS: bulk import ===== -->
+    <section class="card composer spot" id="importer" hidden>
+      <span class="edge" aria-hidden="true"></span>
+      <div class="card-head">
+        <span class="pill light">Import</span>
+        <span class="label">استيراد</span>
+      </div>
+      <p class="composer-help">
+        One card per line: <b>English | Arabic</b>. Blank lines and lines without “|” are skipped.
+        <span class="ar">بطاقة واحدة في كل سطر: الإنجليزية | العربية</span>
+      </p>
+      <textarea class="field tall" id="importText" rows="8" spellcheck="false"
+                placeholder="We help founders step back. | نساعد المؤسسين على التراجع خطوة إلى الوراء"></textarea>
+      <p class="import-msg" id="importMsg" aria-live="polite"></p>
+      <div class="controls">
+        <button class="btn" id="cancelImport">Close</button>
+        <button class="btn primary" id="doImport">Create cards</button>
+      </div>
+    </section>
+
+    <!-- ===== MY TEXTS: from a screenshot ===== -->
+    <section class="card composer spot" id="shot" hidden>
+      <span class="edge" aria-hidden="true"></span>
+      <div class="card-head">
+        <span class="pill light">From a screenshot</span>
+        <span class="label">من صورة</span>
+      </div>
+      <p class="composer-help">
+        Drop a screenshot here, paste it with <b>Ctrl + V</b>, or click to choose a picture. The English text in it becomes practice cards.
+        <span class="ar">ضع صورة هنا، أو الصقها بـ Ctrl + V، أو اضغط لاختيار صورة. النص الإنجليزي الذي فيها يصبح تمارين.</span>
+      </p>
+      <label class="drop" id="shotDrop" for="shotFile" tabindex="0">
+        <input type="file" id="shotFile" accept="image/*" hidden>
+        <img id="shotImg" alt="Your screenshot" hidden>
+        <span class="drop-text" id="shotDropText">Drop, paste or click to choose a picture</span>
+      </label>
+      <div class="ocr-progress" id="shotProgress" hidden>
+        <div class="ocr-bar"><div class="ocr-fill" id="shotBar"></div></div>
+        <span id="shotStatus"></span>
+      </div>
+      <div class="shot-result" id="shotResult" hidden>
+        <span class="label">Text found · you can fix it before saving</span>
+        <textarea class="field tall" id="shotText" rows="7" spellcheck="false"></textarea>
+        <div class="split-row">
+          <div class="segmented" id="shotSplit">
+            <button data-split="sentence" class="active" title="جملة في كل بطاقة">Per sentence</button>
+            <button data-split="paragraph" title="فقرة في كل بطاقة">Per paragraph</button>
+            <button data-split="all" title="كل النص في بطاقة واحدة">All in one</button>
+          </div>
+          <span class="label" id="shotCount"></span>
+        </div>
+      </div>
+      <p class="import-msg" id="shotMsg" aria-live="polite"></p>
+      <div class="controls">
+        <button class="btn" id="cancelShot">Close</button>
+        <button class="btn primary" id="makeShot" disabled>Create cards</button>
+      </div>
+    </section>
+
+    <!-- ===== BOTTOM: stats ===== -->
+    <div class="panel-bottom">
+      <span class="pill dark"><span class="label">Accuracy</span><b id="statAcc">—</b></span>
+      <span class="pill dark"><span class="label">Speed</span><b id="statWpm">—</b></span>
+      <span class="pill dark"><span class="label">Progress</span><b id="statDone">0</b></span>
+    </div>
+
+  </main>
+  </div>
+
+  <!-- ===== Daily goal reached ===== -->
+  <div class="celebrate" id="celebrate" hidden>
+    <div class="celebrate-inner">
+      <span class="label">Daily goal</span>
+      <strong>Goal reached.</strong>
+      <p id="celebrateText"></p>
+      <p class="ar" dir="rtl">أحسنت! أنهيت هدف اليوم</p>
+    </div>
+  </div>
+
+  <script src="extras.js"></script>
+  <script src="script.js"></script>
+  <script src="effects.js"></script>
+</body>
+</html>

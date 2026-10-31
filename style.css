@@ -1,0 +1,1738 @@
+/* =====================================================
+   COLORS
+   ===================================================== */
+:root {
+  --bg: #000000;
+  --text: #fbfbfb;                       /* main white (bright) */
+  --muted: #9b9b9b;                      /* grey text */
+  --faint: #3c3c3c;                      /* letters not typed yet */
+  --line: rgba(255, 255, 255, 0.07);     /* thin borders */
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --bad: #ef8a80;                        /* mistakes (soft red) */
+  --en: "Inter", "Segoe UI", system-ui, sans-serif;
+  --ar: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  color-scheme: dark;
+}
+
+/* Lets the glowing border rotate */
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--en);
+  color: var(--text);
+  background: var(--bg);
+  padding: 48px 16px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ar {
+  font-family: var(--ar);
+}
+
+/* =====================================================
+   MOVING GLOW (background)
+   ===================================================== */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+.orb1 {
+  width: 620px;
+  height: 620px;
+  top: -220px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 65%);
+  animation: drift1 44s ease-in-out infinite alternate;
+}
+
+.orb2 {
+  width: 720px;
+  height: 720px;
+  bottom: -320px;
+  left: -220px;
+  background: radial-gradient(circle, rgba(170, 180, 200, 0.13), transparent 65%);
+  animation: drift2 56s ease-in-out infinite alternate;
+}
+
+.orb3 {
+  width: 460px;
+  height: 460px;
+  top: 35%;
+  left: 40%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 65%);
+  animation: drift3 68s ease-in-out infinite alternate;
+}
+
+@keyframes drift1 { to { transform: translate(-220px, 160px) scale(1.15); } }
+@keyframes drift2 { to { transform: translate(260px, -140px) scale(0.9); } }
+@keyframes drift3 { to { transform: translate(-300px, -120px) scale(1.3); } }
+
+/* =====================================================
+   BIG PANEL
+   ===================================================== */
+.panel {
+  position: relative;
+  z-index: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 36px 48px 32px;
+  border-radius: 40px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.96) 0%, rgba(2, 2, 2, 0.98) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 60px 140px rgba(0, 0, 0, 0.95),
+    0 0 160px rgba(255, 255, 255, 0.04);
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Thin light line on top of the panel */
+.panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.panel-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Sound ON / OFF */
+.sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 0.7rem var(--en);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.25s, border-color 0.25s;
+}
+
+.sound .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+.sound.on {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.sound.on .dot {
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 22px rgba(255, 255, 255, 0.5);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% { box-shadow: 0 0 4px rgba(255, 255, 255, 0.6), 0 0 10px rgba(255, 255, 255, 0.2); }
+}
+
+/* Copy / Translate / Listen switch */
+.segmented {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.segmented button {
+  font: 600 0.7rem var(--en);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button.active {
+  background: var(--text);
+  color: #000;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.25);
+}
+
+/* Title */
+.title {
+  text-align: center;
+  font-weight: 400;
+  font-size: clamp(2.2rem, 5vw, 3.3rem);
+  letter-spacing: -0.03em;
+  margin-top: 34px;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.22);
+}
+
+.title .ar {
+  display: block;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-shadow: none;
+  margin-top: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.02rem;
+  margin-top: 16px;
+}
+
+.subtitle b {
+  font-weight: 400;
+  color: var(--text);
+}
+
+/* Topic list */
+.topics {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 26px;
+  margin: 26px 0 28px;
+}
+
+.topics button {
+  font: 600 0.7rem var(--en);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+  background: none;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+
+.topics button:hover {
+  color: var(--muted);
+}
+
+.topics button.active {
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.45);
+}
+
+.topics button.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px #fff;
+}
+
+.topics .mine {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.topics .mine.active::after {
+  display: none;
+}
+
+.topics .mine.active {
+  border-color: var(--line-strong);
+}
+
+/* =====================================================
+   PRACTICE CARD
+   ===================================================== */
+.card {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 26px 32px 24px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, #0c0c0c 0%, #030303 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 30px 80px rgba(0, 0, 0, 0.85),
+    0 0 70px rgba(255, 255, 255, 0.03);
+}
+
+/* Slowly rotating light around the card border */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--angle),
+    transparent 0%, transparent 77%,
+    rgba(255, 255, 255, 0.14) 83%,
+    rgba(255, 255, 255, 1) 87.5%,
+    rgba(255, 255, 255, 0.14) 91%,
+    transparent 95%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin 26s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin {
+  to { --angle: 360deg; }
+}
+
+/* Flash of light when you finish */
+.card.success {
+  animation: flash 1.4s ease-out;
+}
+
+@keyframes flash {
+  0%   { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 30px 80px rgba(0,0,0,0.85), 0 0 0 rgba(255,255,255,0); }
+  25%  { box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 30px 80px rgba(0,0,0,0.85), 0 0 90px rgba(255,255,255,0.22); }
+  100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 30px 80px rgba(0,0,0,0.85), 0 0 70px rgba(255,255,255,0.03); }
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+/* Pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.pill.light {
+  background: var(--text);
+  color: #000;
+  padding: 5px 12px;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
+.pill.light::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #000;
+}
+
+.pill.dark {
+  padding: 11px 20px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pill.dark b {
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+/* Arabic (smaller) and English (bigger) */
+.arabic {
+  font-family: var(--ar);
+  font-size: 1.2rem;
+  line-height: 1.9;
+  text-align: center;
+  color: #c2c2c2;
+  margin-bottom: 14px;
+}
+
+.english {
+  font-size: 1.9rem;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--faint);
+  min-height: 1.6em;
+  margin-bottom: 24px;
+  word-wrap: break-word;
+}
+
+.arabic.paragraph {
+  font-size: 1rem;
+  line-height: 2;
+  text-align: right;
+}
+
+.english.paragraph {
+  font-size: 1.4rem;
+  line-height: 1.75;
+  text-align: left;
+}
+
+.arabic.word {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.english.word {
+  font-size: 3.3rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Fade in when a new exercise appears */
+.fade {
+  animation: fadeUp 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+
+/* Letter colors while typing */
+.english .ok      { color: var(--text); }
+.english .no      { color: var(--bad); background: rgba(239, 138, 128, 0.12); border-radius: 3px; }
+.english .now     { color: var(--text); animation: blink 1.1s steps(2) infinite; }
+.english .word-ok { color: var(--text); }
+.english .word-no { color: var(--bad); text-decoration: underline wavy; text-underline-offset: 6px; }
+.english.all-ok   { color: var(--text); text-shadow: 0 0 24px rgba(255, 255, 255, 0.25); }
+
+@keyframes blink {
+  0%   { box-shadow: inset 0 -2px 0 #fff; }
+  100% { box-shadow: inset 0 -2px 0 transparent; }
+}
+
+/* Example sentence for hard words */
+.example {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin: -6px 0 22px;
+  text-align: center;
+}
+
+.example-en {
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.example-ar {
+  font-family: var(--ar);
+  color: #5a5a5a;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+/* Text boxes */
+.field {
+  width: 100%;
+  font: 1.15rem/1.6 var(--en);
+  padding: 15px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--text);
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.field::placeholder {
+  color: var(--faint);
+}
+
+.field:focus {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.03), 0 0 30px rgba(255, 255, 255, 0.04);
+}
+
+#typing.done {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+.field.tall {
+  overflow: auto;
+  resize: vertical;
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.field.ar-field {
+  font-family: var(--ar);
+}
+
+/* Little progress bars inside the card */
+.segments {
+  display: flex;
+  gap: 6px;
+  margin-top: 22px;
+}
+
+.segments button {
+  flex: 1;
+  height: 5px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.segments button.done {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+.segments button.current {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   FEEDBACK + BUTTONS
+   ===================================================== */
+.feedback {
+  max-width: 880px;
+  margin: 22px auto 18px;
+  min-height: 1.6em;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.feedback .ar {
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+.feedback.bad span:first-child,
+#composerMsg {
+  color: var(--bad);
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  font: 500 0.86rem var(--en);
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+}
+
+.btn.primary {
+  background: var(--text);
+  color: #000;
+  border-color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+}
+
+.btn.primary:hover {
+  background: #fff;
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.32);
+}
+
+/* Key words */
+.keywords {
+  max-width: 880px;
+  margin: 28px auto 0;
+  text-align: center;
+}
+
+.chips {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chips button {
+  font: 400 0.88rem var(--en);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chips button:hover {
+  border-color: var(--line-strong);
+}
+
+.chips .ar {
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+/* =====================================================
+   MY TEXTS
+   ===================================================== */
+.library {
+  max-width: 880px;
+  margin: 30px auto 0;
+  text-align: center;
+}
+
+.lib-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lib-item {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.lib-item.active {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.lib-item button {
+  font: 400 0.86rem var(--en);
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 6px 8px 14px;
+}
+
+.lib-item .reps {
+  color: var(--muted);
+  margin-left: 8px;
+  font-size: 0.78rem;
+}
+
+.lib-item .del {
+  color: var(--muted);
+  padding: 8px 12px 8px 6px;
+}
+
+.lib-item .del:hover,
+.lib-item .del.armed {
+  color: var(--bad);
+}
+
+.lib-add {
+  border-style: dashed !important;
+}
+
+.composer {
+  margin-top: 4px;
+}
+
+.composer-help {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.composer-help .ar {
+  display: block;
+  color: #5a5a5a;
+}
+
+.composer #composerMsg {
+  margin: 4px auto 12px;
+  min-height: 1.2em;
+  font-size: 0.92rem;
+}
+
+/* Stats at the bottom */
+.panel-bottom {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 36px;
+}
+
+/* =====================================================
+   PHONE SCREENS
+   ===================================================== */
+@media (max-width: 700px) {
+  body { padding: 16px 12px; }
+  .panel { padding: 24px 18px; border-radius: 28px; }
+  .panel-top, .top-right { justify-content: center; }
+  .card { padding: 20px 18px; }
+  .arabic { font-size: 1.05rem; }
+  .english { font-size: 1.4rem; }
+  .english.word { font-size: 2.4rem; }
+  .arabic.paragraph { font-size: 0.95rem; }
+  .english.paragraph { font-size: 1.12rem; }
+  .panel-bottom { justify-content: center; }
+  .pill.dark { padding: 9px 14px; }
+}
+
+/* =====================================================
+   MOUSE EFFECTS (see effects.js)
+   ===================================================== */
+
+/* Glow orbs move with the mouse */
+.orb-wrap {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* Floating dust */
+#dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Soft light that follows the mouse */
+.cursor-glow {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(200, 212, 235, 0.06) 28%,
+    transparent 62%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s;
+  will-change: transform;
+}
+
+.cursor-glow.on {
+  opacity: 1;
+}
+
+/* Big panel: very soft light under the mouse */
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(700px circle at var(--mx, 50%) var(--my, -20%),
+    rgba(255, 255, 255, 0.04), transparent 45%);
+  pointer-events: none;
+}
+
+.panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Card: spotlight inside + glowing border near the mouse */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.07), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.card:hover::after {
+  opacity: 1;
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card .edge {
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.75), transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.card:hover .edge {
+  opacity: 1;
+}
+
+/* Buttons: light where the mouse is, gently pulled toward it */
+.btn {
+  background:
+    radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.16), transparent 70%) no-repeat,
+    rgba(255, 255, 255, 0.02);
+  background-size: 0 0, auto;
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.2s, box-shadow 0.25s;
+}
+
+.btn:hover {
+  background:
+    radial-gradient(90px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.16), transparent 70%) no-repeat,
+    rgba(255, 255, 255, 0.03);
+  background-size: 100% 100%, auto;
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.1);
+}
+
+.btn.primary,
+.btn.primary:hover {
+  background:
+    radial-gradient(70px circle at var(--mx, 50%) var(--my, 50%), #ffffff, transparent 70%) no-repeat,
+    #e4e4e4;
+  background-size: 100% 100%, auto;
+}
+
+.btn.primary:hover {
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.4);
+}
+
+.btn:active {
+  transform: scale(0.96) !important;
+}
+
+/* Small pills and chips glow on hover too */
+.segmented button:not(.active):hover,
+.chips button:hover,
+.lib-item:hover,
+.sound:hover {
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.07);
+}
+
+.pill.dark {
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.pill.dark:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+/* Letters you typed right glow a little */
+.english .ok {
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+/* Ring of light when you click */
+.ripple {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  z-index: 50;
+  animation: ripple 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes ripple {
+  to { transform: scale(4.5); opacity: 0; }
+}
+
+/* =====================================================
+   DAILY GOAL + STREAK (top)
+   ===================================================== */
+.panel > .panel-top {
+  z-index: 5; /* popover above the card */
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.daily {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill.dark.mini {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 13px;
+}
+
+.pill.dark.mini b {
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* thin bar = progress toward today's goal */
+#todayPill::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: var(--p, 0%);
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+#todayPill.reached {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.14);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.icon-btn:hover,
+.icon-btn[aria-expanded="true"] {
+  color: var(--text);
+  border-color: var(--line-strong);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.goal-wrap {
+  position: relative;
+}
+
+.popover,
+.kbd-pop {
+  position: absolute;
+  z-index: 30;
+  border-radius: 16px;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(255, 255, 255, 0.05);
+}
+
+.popover {
+  top: calc(100% + 10px);
+  left: 0;
+  width: 250px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field.goal-input {
+  width: 92px;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 1.05rem;
+  overflow: visible;
+}
+
+.goal-unit {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.goal-ar {
+  color: #5a5a5a;
+  font-size: 0.82rem;
+}
+
+.notice {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 8px;
+}
+
+/* =====================================================
+   CARD ADDITIONS
+   ===================================================== */
+.head-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* "Weak" badge: you missed this before */
+.pill.weak {
+  padding: 4px 10px;
+  border: 1px solid rgba(239, 138, 128, 0.45);
+  color: var(--bad);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: 0 0 16px rgba(239, 138, 128, 0.14);
+}
+
+/* When to use + another example (small and muted) */
+.usage {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin: -8px 0 22px;
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+
+.usage .label {
+  font-size: 0.6rem;
+  color: var(--faint);
+}
+
+.usage-en {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin-top: 3px;
+}
+
+.usage-ar {
+  font-family: var(--ar);
+  color: #5a5a5a;
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+/* Gap mode */
+.english .plain {
+  color: #d4d4d4;
+}
+
+.english .gap {
+  color: var(--text);
+  letter-spacing: 0.14em;
+  padding: 0 3px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.english .gap-ok {
+  letter-spacing: normal;
+  border-bottom-color: transparent;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.5);
+}
+
+/* Speak mode: the sentence to read */
+.english.reading {
+  color: #d4d4d4;
+}
+
+.shake {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.speak-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font: 600 0.76rem var(--en);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s;
+}
+
+.mic:hover {
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.12);
+}
+
+.mic.rec {
+  background: var(--text);
+  color: #000;
+  animation: micPulse 1.4s ease-out infinite;
+}
+
+@keyframes micPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45); }
+  100% { box-shadow: 0 0 0 22px rgba(255, 255, 255, 0); }
+}
+
+.heard {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Keyboard shortcuts "?" */
+.kbd-hint {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.kbd-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--muted);
+  font: 600 0.8rem var(--en);
+  cursor: pointer;
+}
+
+.kbd-btn:hover,
+.kbd-btn[aria-expanded="true"] {
+  color: var(--text);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
+}
+
+.kbd-pop {
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 270px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.kbd-pop p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.kbd-pop p span {
+  margin-left: auto;
+  color: var(--text);
+}
+
+kbd {
+  font: 500 0.72rem var(--en);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+/* =====================================================
+   SESSION SUMMARY + EMPTY REVIEW
+   ===================================================== */
+.sum-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.sum-stats > div {
+  display: grid;
+  gap: 6px;
+  padding: 16px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+}
+
+.sum-stats b {
+  font-weight: 500;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.25);
+}
+
+.sum-title {
+  margin-bottom: 10px;
+}
+
+.sum-misses {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow: auto;
+  margin-bottom: 22px;
+}
+
+.sum-misses li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.sum-misses li.none {
+  color: var(--muted);
+  text-align: center;
+}
+
+.miss-text {
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.empty {
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
+}
+
+/* My texts: messages for export / import */
+.lib-msg,
+.import-msg {
+  min-height: 1.3em;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.import-msg {
+  margin: 2px 0 12px;
+  color: var(--text);
+}
+
+/* =====================================================
+   FROM A SCREENSHOT
+   ===================================================== */
+.drop {
+  display: grid;
+  place-items: center;
+  min-height: 160px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+}
+
+.drop:hover,
+.drop:focus-visible,
+.drop.over {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.08);
+}
+
+.drop img {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+/* =====================================================
+   BIG PANEL: deep glow behind + bright light on the border
+   ===================================================== */
+.stage {
+  position: relative;
+  z-index: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* All the lights of one square turn together (same speed, same angle),
+   so the line on the border and the glow behind it look like one light. */
+:root {
+  --panel-speed: 36s;
+  --card-speed: 26s;
+}
+
+/* Deep glow behind the big panel: a calm halo all around
+   + a stronger glow where the moving light is */
+.stage-aura {
+  position: absolute;
+  inset: -14px;
+  z-index: 0;
+  border-radius: 54px;
+  background: conic-gradient(from calc(var(--angle) + 180deg),
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 62%,
+    rgba(255, 255, 255, 0.34) 87%,
+    rgba(255, 255, 255, 0.05) 100%);
+  filter: blur(70px);
+  pointer-events: none;
+  animation:
+    spin var(--panel-speed) linear infinite,
+    breathe 12s ease-in-out infinite;
+}
+
+/* Bloom: a soft blurred copy of the border light, just outside the panel */
+.stage-bloom {
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  border-radius: 43px;
+  filter: blur(9px);
+  pointer-events: none;
+}
+
+.stage-bloom span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 4px;
+  background: conic-gradient(from calc(var(--angle) + 180deg),
+    transparent 0%, transparent 76%,
+    rgba(255, 255, 255, 0.5) 87%,
+    transparent 96%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spin var(--panel-speed) linear infinite;
+}
+
+/* the ring shapes: only the 1.5px border is painted */
+.panel > .panel-beam,
+.panel > .panel-edge {
+  position: absolute;
+  inset: -1px;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* a bright line of light travelling slowly around the panel */
+.panel > .panel-beam {
+  background: conic-gradient(from calc(var(--angle) + 180deg),
+    transparent 0%, transparent 78%,
+    rgba(255, 255, 255, 0.12) 83%,
+    rgba(255, 255, 255, 1) 87%,
+    rgba(255, 255, 255, 0.12) 90.5%,
+    transparent 94%, transparent 100%);
+  animation: spin var(--panel-speed) linear infinite;
+}
+
+/* the border lights up near the mouse */
+.panel > .panel-edge {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, -50%),
+    rgba(255, 255, 255, 0.7), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.panel:hover > .panel-edge {
+  opacity: 1;
+}
+
+/* =====================================================
+   DEEP GLOW behind the practice card (slowly moving)
+   ===================================================== */
+.card .aura {
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: inherit;
+  /* same angle as the card's border light, so the glow follows it */
+  background: conic-gradient(from var(--angle),
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.04) 64%,
+    rgba(255, 255, 255, 0.32) 87.5%,
+    rgba(255, 255, 255, 0.04) 100%);
+  filter: blur(36px);
+  pointer-events: none;
+  animation:
+    spin var(--card-speed) linear infinite,
+    breathe 10s ease-in-out infinite;
+  transition: filter 0.6s;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.015); }
+}
+
+/* A little brighter while you type (same slow speed) */
+.card:focus-within .aura {
+  filter: blur(32px) brightness(1.35);
+}
+
+/* Bright flash when you finish an item */
+.card.success .aura {
+  animation:
+    spin var(--card-speed) linear infinite,
+    auraFlash 1.4s ease-out;
+}
+
+@keyframes auraFlash {
+  0%   { opacity: 0.5; }
+  25%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+/* Arabic being translated */
+.arabic.pending {
+  color: var(--faint);
+  animation: pulseText 1.4s ease-in-out infinite;
+}
+
+@keyframes pulseText {
+  50% { opacity: 0.4; }
+}
+
+/* "Screenshot" button at the top */
+.sound.shot-open {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.sound.shot-open:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
+}
+
+.ocr-progress {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.ocr-bar {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.ocr-fill {
+  height: 100%;
+  width: 0;
+  background: #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  transition: width 0.3s;
+}
+
+.ocr-fill.indeterminate {
+  width: 30%;
+  animation: ocrSlide 1.2s ease-in-out infinite;
+}
+
+@keyframes ocrSlide {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(340%); }
+}
+
+.shot-result {
+  display: grid;
+  gap: 8px;
+}
+
+.shot-result .field.tall {
+  margin-bottom: 4px;
+}
+
+.split-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* =====================================================
+   DAILY GOAL REACHED
+   ===================================================== */
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.7) 60%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+
+.celebrate-inner {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 36px 48px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(180deg, #141414 0%, #070707 100%);
+  box-shadow: 0 0 90px rgba(255, 255, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.celebrate-inner strong {
+  font-weight: 400;
+  font-size: clamp(2rem, 6vw, 3rem);
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+}
+
+.celebrate-inner p {
+  color: var(--muted);
+}
+
+.celebrate.show .celebrate-inner {
+  animation: pop 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.celebrate.show .celebrate-inner::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  animation: ringOut 1.4s ease-out 0.15s both;
+  pointer-events: none;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes ringOut {
+  from { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55); }
+  to   { box-shadow: 0 0 0 70px rgba(255, 255, 255, 0); }
+}
+
+/* =====================================================
+   PHONES (down to 390px)
+   ===================================================== */
+@media (max-width: 700px) {
+  .panel-top { flex-direction: column; align-items: stretch; }
+  .top-left { flex-direction: column; gap: 10px; }
+  .daily { justify-content: center; }
+  .popover { left: auto; right: -8px; }
+  .top-right { flex-direction: column; align-items: stretch; }
+  .sound { justify-content: center; }
+  .segmented { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .segmented::-webkit-scrollbar { display: none; }
+  .segmented button { flex: 1 0 auto; padding: 9px 10px; letter-spacing: 0.08em; }
+
+  /* category tabs scroll sideways */
+  .topics {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 0 20px;
+    margin: 20px -18px 22px;
+    padding: 4px 18px 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topics::-webkit-scrollbar { display: none; }
+  .topics button { flex: none; white-space: nowrap; }
+
+  .card { max-width: none; }
+
+  /* control buttons: two rows */
+  #practice .controls .btn {
+    flex: 1 1 calc(25% - 8px);
+    min-width: 0;
+    padding: 12px 4px;
+    font-size: 0.8rem;
+  }
+
+  .field { min-height: 48px; font-size: 1.05rem; }
+  .sum-stats { gap: 6px; }
+  .sum-stats > div { padding: 12px 4px; }
+  .sum-stats b { font-size: 1.15rem; }
+  .celebrate-inner { padding: 28px 24px; }
+}
+
+@media (max-width: 420px) {
+  body { padding: 10px 8px; }
+  .panel { padding: 20px 12px; border-radius: 24px; }
+  .card { padding: 18px 14px; border-radius: 18px; }
+  .topics { margin-inline: -12px; padding-inline: 12px; }
+  .english { font-size: 1.3rem; }
+  .english.paragraph { font-size: 1.05rem; }
+}
+
+/* The glows go a little past the screen edge: cut them there,
+   so the page never slides sideways on a phone */
+html,
+body {
+  overflow-x: clip;
+}
+
+@media (max-width: 700px) {
+  .stage-aura { inset: 0; }
+}
+
+/* No mouse on touch screens: no light following a cursor */
+@media (hover: none) and (pointer: coarse) {
+  .cursor-glow { display: none; }
+}
+
+/* No keyboard on touch screens: hide the shortcuts hint */
+@media (hover: none) and (pointer: coarse) {
+  .kbd-hint { display: none; }
+}
+
+/* People who turned off animations in their system settings */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation: none !important; transition: none !important; }
+}
